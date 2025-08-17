@@ -49,6 +49,16 @@ jobs:
     - name: Build JAR
       run: ./gradlew bootJar
 
+    - name: Rename JAR with SemVer + date + CI run
+      run: |
+        SEMVER="0.0.1"  # update this manually per official release
+        DATE=$(date +%Y%m%d)
+        BUILD_NO=${{ github.run_number }}
+        ORIGINAL_JAR=$(ls build/libs/*.jar)
+        NEW_JAR="trading-app-${SEMVER}-${DATE}-build${BUILD_NO}.jar"
+        mv "$ORIGINAL_JAR" "build/libs/$NEW_JAR"
+        echo "Renamed JAR: $NEW_JAR"
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
