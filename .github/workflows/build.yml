@@ -1,18 +1,26 @@
 name: Build Trading App
 
-# <-- This is required! GitHub must know when to trigger the workflow
+# Trigger workflow on push to main or on pull requests
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      # Dummy DB values for CI build
+      TRADING_DB_URL: jdbc:postgresql://localhost:5432/dummy_db
+      TRADING_DB_USER: dummy_user
+      TRADING_DB_PASS: dummy_pass
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v3
@@ -20,11 +28,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Build with Gradle
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x gradlew
+
+      - name: Build and test with Gradle
         run: ./gradlew clean build --no-daemon
 
-      - name: Upload JAR
-        uses: actions/upload-artifact@v3
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
         with:
           name: trading-app-jar
           path: build/libs/*.jar
