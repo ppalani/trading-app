@@ -5,16 +5,15 @@ plugins {
     id 'maven-publish'
 }
 
-ext {
-    appGroup = 'com.example'
-    appArtifact = 'trading-app'
-    appBaseVersion = '0.0.1'
-    appBuildDate = new Date().format('yyyyMMdd')
-}
+group = 'com.example'
+description = 'Demo project for Spring Boot'
 
-group = appGroup
-version = "${appBaseVersion}-${appBuildDate}-SNAPSHOT"
-description = 'Trading App Demo project for Spring Boot'
+// Dynamic versioning: SemVer + date + build number
+def semVer = System.getenv("SEMVER") ?: "0.0.1"
+def buildDate = System.getenv("BUILD_DATE") ?: new Date().format("yyyyMMdd")
+def buildNo = System.getenv("BUILD_NO") ?: "local"
+
+version = "${semVer}-${buildDate}-build${buildNo}"
 
 java {
     toolchain {
@@ -43,26 +42,23 @@ bootRun {
     mainClass = 'com.example.trading_app.TradingAppApplication'
 }
 
-/**
- * Optional: publishing config (for GitHub Packages or Nexus)
- * Only runs when ./gradlew publish is called.
- */
+// Publishing to GitHub Packages (Maven repo)
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            groupId = appGroup
-            artifactId = appArtifact
-            version = project.version
             from components.java
+            groupId = project.group
+            artifactId = "trading-app"
+            version = project.version
         }
     }
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/YOUR_GITHUB_USER/YOUR_REPO")
+            url = uri("https://maven.pkg.github.com/ppalani/trading-app")
             credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
-                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }

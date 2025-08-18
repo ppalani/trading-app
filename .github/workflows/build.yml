@@ -1,4 +1,4 @@
-name: Build and Test Trading App
+name: Build and Publish Trading App
 
 on:
   push:
@@ -29,6 +29,9 @@ jobs:
       TRADING_DB_URL: jdbc:postgresql://localhost:5432/testdb
       TRADING_DB_USER: testuser
       TRADING_DB_PASS: testpass
+      SEMVER: "0.0.1"  # manually bump when releasing
+      BUILD_DATE: ${{ github.run_id }}
+      BUILD_NO: ${{ github.run_number }}
 
     steps:
     - name: Checkout code
@@ -49,26 +52,18 @@ jobs:
     - name: Build JAR
       run: ./gradlew bootJar
 
-    - name: Rename JAR with SemVer + date + CI run
-      run: |
-        SEMVER="0.0.1"  # update this manually per official release
-        DATE=$(date +%Y%m%d)
-        BUILD_NO=${{ github.run_number }}
-        ORIGINAL_JAR=$(ls build/libs/*.jar)
-        NEW_JAR="trading-app-${SEMVER}-${DATE}-build${BUILD_NO}.jar"
-        mv "$ORIGINAL_JAR" "build/libs/$NEW_JAR"
-        echo "Renamed JAR: $NEW_JAR"
-        
-        # Save metadata for reference in Ansible or other steps
-        echo "ARTIFACT_NAME=$NEW_JAR" > build/artifact-info.env
-        echo "BUILD_DATE=$DATE" >> build/artifact-info.env
-        echo "COMMIT_SHA=${GITHUB_SHA}" >> build/artifact-info.env
-
     - name: Upload artifact with metadata
       uses: actions/upload-artifact@v4
       with:
         name: trading-app-jar
         path: |
           build/libs/*.jar
-          build/artifact-info.env
         retention-days: 7
+
+    # Only publish to GitHub Packages if push to main
+    - name: Publish to GitHub Packages
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: ./gradlew publish
+      env:
+        GITHUB_ACTOR: ${{ github.actor }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
