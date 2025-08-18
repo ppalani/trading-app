@@ -2,11 +2,19 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.8'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'maven-publish'
 }
 
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
-description = 'Demo project for Spring Boot'
+ext {
+    appGroup = 'com.example'
+    appArtifact = 'trading-app'
+    appBaseVersion = '0.0.1'
+    appBuildDate = new Date().format('yyyyMMdd')
+}
+
+group = appGroup
+version = "${appBaseVersion}-${appBuildDate}-SNAPSHOT"
+description = 'Trading App Demo project for Spring Boot'
 
 java {
     toolchain {
@@ -33,4 +41,29 @@ tasks.named('test') {
 
 bootRun {
     mainClass = 'com.example.trading_app.TradingAppApplication'
+}
+
+/**
+ * Optional: publishing config (for GitHub Packages or Nexus)
+ * Only runs when ./gradlew publish is called.
+ */
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = appGroup
+            artifactId = appArtifact
+            version = project.version
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/YOUR_GITHUB_USER/YOUR_REPO")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }
