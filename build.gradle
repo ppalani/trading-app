@@ -42,13 +42,13 @@ bootRun {
     mainClass = 'com.example.trading_app.TradingAppApplication'
 }
 
-// Publishing to GitHub Packages (Maven repo)
+// Publishing: only the fat JAR
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            from components.java
+            artifact bootJar // publish the Spring Boot executable JAR
             groupId = project.group
-            artifactId = "trading-app"
+            artifactId = 'trading-app'
             version = project.version
         }
     }
